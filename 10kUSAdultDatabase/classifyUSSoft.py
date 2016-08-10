@@ -41,6 +41,7 @@ def parse_args():
 
 def classify(net, inputDirectory, xlsxTable, statisticXlsxTable, trainXlsxTable):
 
+
     statisticTable = pd.read_excel(statisticXlsxTable)
     trainTable = pd.read_excel(trainXlsxTable)
 
@@ -53,25 +54,21 @@ def classify(net, inputDirectory, xlsxTable, statisticXlsxTable, trainXlsxTable)
         if image.replace('_oval.jpg', '.png') in images:
             imagesList.append(image)
 
-    normalizeValues = np.zeros(trainTable.shape[1])
     meanValues = np.zeros(trainTable.shape[1])
+    mostFrequent =  np.zeros(trainTable.shape[1])
     for columnIndex in range(0 , trainTable.shape[1]):
-        normalizeValues[columnIndex] = np.amax(trainTable[trainTable.columns[columnIndex]].values)
         meanValues[columnIndex] = np.mean(trainTable[trainTable.columns[columnIndex]].values)
-    normalizeValues = normalizeValues.astype(float)
-    meanValues = meanValues.astype(float)
+        mostFrequent[columnIndex] = np.bincount(trainTable[trainTable.columns[columnIndex]].values.astype(int)).argmax()
+    meanValues = np.rint(meanValues).astype(int)
 
-    meanValues = meanValues/normalizeValues
 
 
     batchSize = net.blobs['data'].data.shape[0]
 
-    MSE = np.zeros(USTable.shape[1])
-    RMSE = np.zeros(USTable.shape[1])
-    MeanMSE = np.zeros(USTable.shape[1])
-    MeanRMSE = np.zeros(USTable.shape[1])
-    PercentageDif = np.zeros(USTable.shape[1])
-    accuracy = np.zeros(USTable.shape[1])
+    score = np.zeros(USTable.shape[1])
+    scoreMean = np.zeros(USTable.shape[1])
+    scoreMostFrequent = np.zeros(USTable.shape[1])
+
 
     counter = 0
 
@@ -83,61 +80,52 @@ def classify(net, inputDirectory, xlsxTable, statisticXlsxTable, trainXlsxTable)
             sizeOfRange = batchSize
 
         for index in range(0, sizeOfRange):
-            image = cv2.imread(os.path.join(inputDirectory, imagesList[index + counter].replace('_oval.jpg', '.png')), 0)
+            image = cv2.imread(os.path.join(inputDirectory, imagesList[index + counter].replace('_oval.jpg', '.png')), 1)
             image = image[4:132,4:132]
             image = (image - 127.0)/127.0
-            #image = np.rollaxis(image, 2, 0)
+            image = np.rollaxis(image, 2, 0)
             net.blobs['data'].data[index] = image
 
         out = net.forward()
 
         for index in range(0, sizeOfRange):
-            absDif = np.absolute(USTable.loc[imagesList[index + counter]].values/normalizeValues - out['ip2'][index])
-            absDifMean = np.absolute(USTable.loc[imagesList[index + counter]].values/normalizeValues - meanValues)
-            RMSE += absDif
-            MSE += absDif**2
-            MeanRMSE += absDifMean
-            MeanMSE += absDifMean**2
-            PercentageDif += np.absolute(USTable.loc[imagesList[index + counter]].values/normalizeValues - out['ip2'][index])/normalizeValues
-            for columnIndex in range(0, len(out['ip2'][index])):
-                if (round(out['ip2'][index][columnIndex], 0) == round((USTable.loc[imagesList[index + counter]].values/normalizeValues)[columnIndex], 0)):
-                    accuracy[columnIndex] += 1
+            for label in range(0, USTable.shape[1]):
+                if ((out['reshape'][index][:, label].argmax() - 1) == round(USTable.loc[imagesList[index + counter]].values[label], 0)):
+                    score[label] += 1
+                if (meanValues[label] == round(USTable.loc[imagesList[index + counter]].values[label], 0)):
+                    scoreMean[label] += 1
+                if (mostFrequent[label] == round(USTable.loc[imagesList[index + counter]].values[label], 0)):
+                    scoreMostFrequent[label] += 1
+
+
+
 
         print("Batch DONE.")
 
         counter += sizeOfRange
 
+    score = score/USTable.shape[0]
+    scoreMean = scoreMean/USTable.shape[0]
+    scoreMostFrequent = scoreMostFrequent/USTable.shape[0]
 
-    MSE = MSE/counter
-    RMSE = RMSE/counter
-    MeanMSE = MeanMSE/counter
-    MeanRMSE = MeanRMSE/counter
-    PercentageDif = PercentageDif/counter
-    accuracy = accuracy/USTable.shape[0]
 
     statisticIndex = 0
     if (USTable.shape[1] == 50):
         statisticIndex = 1
-    elif (USTable.shape[1] == 70):
-        statisticIndex = 2
 
-    for index in range(0, len(MSE)):
-        statisticTable.loc[USTable.columns[index]][statisticIndex*6] = PercentageDif[index]*100
-        statisticTable.loc[USTable.columns[index]][statisticIndex*6 + 1] = MSE[index]
-        statisticTable.loc[USTable.columns[index]][statisticIndex*6 + 2] = RMSE[index]
-        statisticTable.loc[USTable.columns[index]][statisticIndex*6 + 3] = MSE[index]/MeanMSE[index]
-        statisticTable.loc[USTable.columns[index]][statisticIndex*6 + 4] = RMSE[index]/MeanRMSE[index]
-        statisticTable.loc[USTable.columns[index]][statisticIndex*6 + 5] = accuracy[index]
+    for index in range(0, len(score)):
+        statisticTable.loc[USTable.columns[index]][statisticIndex*3] = score[index]
+        statisticTable.loc[USTable.columns[index]][statisticIndex*3 + 1] = scoreMean[index]
+        statisticTable.loc[USTable.columns[index]][statisticIndex*3 + 2] = scoreMostFrequent[index]
 
 
 
+    print score
+    print scoreMean
+    print scoreMostFrequent
 
-
-    print accuracy
-    print('Loss: {}'.format(np.sum(MSE)))
     statisticTable = statisticTable.round(4)
     statisticTable.to_excel(statisticXlsxTable)
-
 
 def main():
     args = parse_args()

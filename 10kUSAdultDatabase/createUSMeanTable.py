@@ -51,16 +51,16 @@ def findMostFrequentValue(array):
 
 def countUSMeanTableRow(imageMatrix, USTableColumns):
 
-    #means = [True, True, False, True, True, False, False, False, False,
-# False, True, False, False, True, False, True, False, True, True, False]
+    means = [True, True, False, True, True, False, False, False, False,
+             False, True, False, False, True, False, True, False, True, True, False]
 
     USMeanTableRow = {}
-    #for i, mean in enumerate(means):
-        #if mean:
-    for i in range(len(USTableColumns) - 2):
-        USMeanTableRow[USTableColumns[i + 2]] = countMean(imageMatrix[:,i])
-        #else:
-        #    USMeanTableRow[USTableColumns[i + 2]] = findMostFrequentValue(imageMatrix[:,i])
+    for i, mean in enumerate(means):
+        if mean:
+    #for i in range(len(USTableColumns) - 2):
+            USMeanTableRow[USTableColumns[i + 2]] = countMean(imageMatrix[:,i])
+        else:
+            USMeanTableRow[USTableColumns[i + 2]] = findMostFrequentValue(imageMatrix[:,i])
 
     return USMeanTableRow
 
@@ -78,7 +78,7 @@ def createRegressionTable(inputXlsxTable, outputXlsxFile):
             if indexRow != 0:
                 imagesNames.append(imageName)
                 USMeanTable.append(countUSMeanTableRow(imageMatrix, USTable.columns))
-                
+
 
             imageName = USTable.iloc[indexRow].values[0]
             imageMatrix = USTable.iloc[indexRow].values[2:]
@@ -90,6 +90,7 @@ def createRegressionTable(inputXlsxTable, outputXlsxFile):
 
 
     pdUSMeanTable = pd.DataFrame(USMeanTable, index=imagesNames)
+    pdUSMeanTable = pdUSMeanTable[USTable.columns[2:]]
     pdUSMeanTable.to_excel(outputXlsxFile + '.xlsx')
 
 
