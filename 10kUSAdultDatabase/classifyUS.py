@@ -72,6 +72,8 @@ def classify(net, inputDirectory, xlsxTable, statisticXlsxTable, trainXlsxTable)
     MeanRMSE = np.zeros(USTable.shape[1])
     PercentageDif = np.zeros(USTable.shape[1])
     accuracy = np.zeros(USTable.shape[1])
+    MeanAccuracy = np.zeros(USTable.shape[1])
+
 
     counter = 0
 
@@ -84,7 +86,7 @@ def classify(net, inputDirectory, xlsxTable, statisticXlsxTable, trainXlsxTable)
 
         for index in range(0, sizeOfRange):
             image = cv2.imread(os.path.join(inputDirectory, imagesList[index + counter].replace('_oval.jpg', '.png')), 0)
-            image = image[4:132,4:132]
+            image = image[3:67,3:67]
             image = (image - 127.0)/127.0
             #image = np.rollaxis(image, 2, 0)
             net.blobs['data'].data[index] = image
@@ -102,6 +104,8 @@ def classify(net, inputDirectory, xlsxTable, statisticXlsxTable, trainXlsxTable)
             for columnIndex in range(0, len(out['ip2'][index])):
                 if (round(out['ip2'][index][columnIndex], 0) == round((USTable.loc[imagesList[index + counter]].values/normalizeValues)[columnIndex], 0)):
                     accuracy[columnIndex] += 1
+                if (round(meanValues[columnIndex], 0) == round((USTable.loc[imagesList[index + counter]].values/normalizeValues)[columnIndex], 0)):
+                    MeanAccuracy[columnIndex] += 1
 
         print("Batch DONE.")
 
@@ -113,7 +117,9 @@ def classify(net, inputDirectory, xlsxTable, statisticXlsxTable, trainXlsxTable)
     MeanMSE = MeanMSE/counter
     MeanRMSE = MeanRMSE/counter
     PercentageDif = PercentageDif/counter
-    accuracy = accuracy/USTable.shape[0]
+    accuracy = accuracy/counter
+    MeanAccuracy = MeanAccuracy/counter
+
 
     statisticIndex = 0
     if (USTable.shape[1] == 50):
@@ -122,12 +128,14 @@ def classify(net, inputDirectory, xlsxTable, statisticXlsxTable, trainXlsxTable)
         statisticIndex = 2
 
     for index in range(0, len(MSE)):
-        statisticTable.loc[USTable.columns[index]][statisticIndex*6] = PercentageDif[index]*100
-        statisticTable.loc[USTable.columns[index]][statisticIndex*6 + 1] = MSE[index]
-        statisticTable.loc[USTable.columns[index]][statisticIndex*6 + 2] = RMSE[index]
-        statisticTable.loc[USTable.columns[index]][statisticIndex*6 + 3] = MSE[index]/MeanMSE[index]
-        statisticTable.loc[USTable.columns[index]][statisticIndex*6 + 4] = RMSE[index]/MeanRMSE[index]
-        statisticTable.loc[USTable.columns[index]][statisticIndex*6 + 5] = accuracy[index]
+        statisticTable.loc[USTable.columns[index]][statisticIndex*7] = PercentageDif[index]*100
+        statisticTable.loc[USTable.columns[index]][statisticIndex*7 + 1] = MSE[index]
+        statisticTable.loc[USTable.columns[index]][statisticIndex*7 + 2] = RMSE[index]
+        statisticTable.loc[USTable.columns[index]][statisticIndex*7 + 3] = MSE[index]/MeanMSE[index]
+        statisticTable.loc[USTable.columns[index]][statisticIndex*7 + 4] = RMSE[index]/MeanRMSE[index]
+        statisticTable.loc[USTable.columns[index]][statisticIndex*7 + 5] = accuracy[index]
+        statisticTable.loc[USTable.columns[index]][statisticIndex*7 + 6] = MeanAccuracy[index]/accuracy[index]
+
 
 
 

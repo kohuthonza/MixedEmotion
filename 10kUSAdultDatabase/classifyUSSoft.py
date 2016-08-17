@@ -81,7 +81,7 @@ def classify(net, inputDirectory, xlsxTable, statisticXlsxTable, trainXlsxTable)
 
         for index in range(0, sizeOfRange):
             image = cv2.imread(os.path.join(inputDirectory, imagesList[index + counter].replace('_oval.jpg', '.png')), 1)
-            image = image[4:132,4:132]
+            image = image[3:67,3:67]
             image = (image - 127.0)/127.0
             image = np.rollaxis(image, 2, 0)
             net.blobs['data'].data[index] = image
@@ -104,19 +104,21 @@ def classify(net, inputDirectory, xlsxTable, statisticXlsxTable, trainXlsxTable)
 
         counter += sizeOfRange
 
-    score = score/USTable.shape[0]
-    scoreMean = scoreMean/USTable.shape[0]
-    scoreMostFrequent = scoreMostFrequent/USTable.shape[0]
+    score = score/counter
+    scoreMean = scoreMean/counter
+    scoreMostFrequent = scoreMostFrequent/counter
 
 
     statisticIndex = 0
     if (USTable.shape[1] == 50):
         statisticIndex = 1
+    if (USTable.shape[1] == 70):
+        statisticIndex = 2
 
     for index in range(0, len(score)):
         statisticTable.loc[USTable.columns[index]][statisticIndex*3] = score[index]
-        statisticTable.loc[USTable.columns[index]][statisticIndex*3 + 1] = scoreMean[index]
-        statisticTable.loc[USTable.columns[index]][statisticIndex*3 + 2] = scoreMostFrequent[index]
+        statisticTable.loc[USTable.columns[index]][statisticIndex*3 + 1] = scoreMean[index]/score[index]
+        statisticTable.loc[USTable.columns[index]][statisticIndex*3 + 2] = scoreMostFrequent[index]/score[index]
 
 
 
