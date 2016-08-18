@@ -147,13 +147,13 @@ def renderAgeToFrame(frame, ageLabel):
                            np.sum(ageLabel[57:])]
     ageCategories = ["(0, 2)", "(4, 6)", "(8, 12)", "(15, 20)", "(25, 32)", "(35, 43)", "(46, 53)", "(60, 100)"]
     for i, age in enumerate(ageCategories):
-        cv2.putText(frame, age, (frame.shape[1] - frame.shape[1]/6, 2 * yShiftBar + shiftBar * (i + 2)), cv2.FONT_HERSHEY_SIMPLEX, frame.shape[0]/520.0, (0, 255, 0))
-        cv2.rectangle(frame, (frame.shape[1] - frame.shape[1]/6, 2 * yShiftBar - heightShiftBar + shiftBar * (i + 2)), (frame.shape[1] - frame.shape[1]/6 - int(frame.shape[1]/3 * float(valuesAgeCatogories[i])), 2 * yShiftBar + shiftBar * (i + 2)), (0, 255, 0), cv2.FILLED)
+        cv2.putText(frame, age, (frame.shape[1] - frame.shape[1]/6, 2 * yShiftBar + shiftBar * (i + 2)), cv2.FONT_HERSHEY_SIMPLEX, frame.shape[0]/520.0, (0, 255, 0), thickness=2)
+        cv2.rectangle(frame, (frame.shape[1] - frame.shape[1]/6, 2 * yShiftBar - heightShiftBar + shiftBar * (i + 2)), (frame.shape[1] - frame.shape[1]/6 - int(widhtShiftBar * float(valuesAgeCatogories[i])), 2 * yShiftBar + shiftBar * (i + 2)), (0, 255, 0), cv2.FILLED)
 
     meanAge = 0
     for i, value in enumerate(ageLabel):
         meanAge += value*i
-    cv2.putText(frame, 'Mean Age: ' + str(meanAge), (frame.shape[1] - frame.shape[1]/3, 2 * yShiftBar + shiftBar * 10), cv2.FONT_HERSHEY_SIMPLEX, frame.shape[0]/520.0, (0, 255, 0))
+    cv2.putText(frame, 'Mean Age: ' + str(meanAge), (frame.shape[1] - frame.shape[1]/3, 2 * yShiftBar + shiftBar * 10), cv2.FONT_HERSHEY_SIMPLEX, frame.shape[0]/520.0, (0, 255, 0),  thickness=2)
 
     return frame
 
